@@ -8,13 +8,14 @@
 2. Iterates over all found filenames
 3. Finds all orders 
 4. Stores information in redis (using order number as key)
-5. deletes succesfuly parsed xml
+5. deletes successfully parsed xml
 6. in case xml has bad or malformed structure it will not be automatically deleted
 
 
 ## Schemas
 XML structure
 ```go
+...
 type XMLDump struct {
 	XMLName    xml.Name `xml:"КоммерческаяИнформация"`
 	Containers []struct {
@@ -30,10 +31,11 @@ type XMLDump struct {
 		} `xml:"Документ"`
 	} `xml:"Контейнер"`
 }
+...
 ```
 Resulting JSON structure
 ```json
-```json
+
  {
     "orderNumber": "477294",
     "properties": [
@@ -64,7 +66,7 @@ Resulting JSON structure
         {
             "name": "Стоимость доставки ТК",
             "value": "431"
-        },
+        }
 ]}
 ```
 This json will then be written to be available by `477294` key
@@ -74,6 +76,8 @@ This json will then be written to be available by `477294` key
 
 example:
 >go run main.go -path C:/Users/legen/GolandProjects/xmls/ -redisAddress 127.0.0.1 -redisPort 6379 -redisDbIndex 7
+
+Parameters:
 
 >-help
 Show help
