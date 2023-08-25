@@ -4,9 +4,11 @@ import (
 	"IMAXMLParser/redis"
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 var Path string
@@ -54,14 +56,15 @@ type Document struct {
 func ParseXML(filename string) {
 	xmlFile, err := os.ReadFile(Path + filename)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 
 	dump := new(XMLDump)
 	err = xml.Unmarshal(xmlFile, dump)
 
 	if err != nil {
-		fmt.Printf("error: %v", err)
+
+		//fmt.Printf("error: %v", err, "BAD XML \n")
 		return
 	}
 
@@ -78,10 +81,10 @@ func ParseXML(filename string) {
 			}
 
 			//debug print
-			if document.Number == "477294" {
-				fmt.Println("----------DEBUG PRINT STARTS----------")
-				fmt.Println(document)
-			}
+			//if document.Number == "477294" {
+			//	fmt.Println("----------DEBUG PRINT STARTS----------")
+			//	fmt.Println(document)
+			//}
 			order := new(Order)
 			order.Properties = make([]OrderProperties, 0)
 
@@ -100,34 +103,58 @@ func ParseXML(filename string) {
 			jsonData, err := json.MarshalIndent(order, "", "    ")
 
 			if err != nil {
-				log.Fatal(err)
+				return
+				//log.Fatal(err)
 			}
 
 			//fmt.Println(string(jsonData))
 
 			err = redis.Redis.Set(redis.Ctx, order.OrderNumber, jsonData, 0).Err()
 			if err != nil {
-				log.Fatal(err)
+				return
+				//log.Fatal(err)
 			}
 
 			//Write to redis
 
 		}
 	}
-
-	keys, err := redis.Redis.Keys(redis.Ctx, "*").Result()
+	err = os.Remove(filename)
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+		log.Println(err)
 	}
-	for _, key := range keys {
-		value, err := redis.Redis.Get(redis.Ctx, key).Result()
-		if err != nil {
-			fmt.Println("Error:", err)
-			continue
+	//print all redis keys
+
+	//keys, err := redis.Redis.Keys(redis.Ctx, "*").Result()
+	//if err != nil {
+	//	fmt.Println("Error:", err)
+	//	return
+	//}
+	//for _, key := range keys {
+	//	value, err := redis.Redis.Get(redis.Ctx, key).Result()
+	//	if err != nil {
+	//		fmt.Println("Error:", err)
+	//		continue
+	//	}
+	//
+	//	fmt.Println("\n Key:", key, "\n Value: \n", value)
+	//}
+
+}
+
+func GetAllXMLFilePaths(directoryPath string) ([]string, error) {
+	var filePaths []string
+
+	files, err := ioutil.ReadDir(directoryPath)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range files {
+		if !file.IsDir() && strings.HasSuffix(file.Name(), ".xml") {
+			filePaths = append(filePaths, filepath.Join(directoryPath, file.Name()))
 		}
-
-		fmt.Println("\n Key:", key, "\n Value: \n", value)
 	}
 
+	return filePaths, nil
 }
