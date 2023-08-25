@@ -1,24 +1,33 @@
 package main
 
 import (
+	"IMAXMLParser/redis"
+	"IMAXMLParser/xmlParser"
 	"flag"
-	"fmt"
+	"log"
 	"os"
+	"time"
 )
 
 // Define the flag
 var help = flag.Bool("help", false, "Show help")
-var boolFlag = false
+var xmlPath = "./" +
+	""
 var redisIP = "localhost"
-var redisPort int
+var redisPassword = ""
+var redisPort = "6379"
+
+func timeTrack(start time.Time, name string) {
+	elapsed := time.Since(start)
+	log.Printf("%s took %s", name, elapsed)
+}
 
 func main() {
 	// Bind the flag
-	flag.BoolVar(&boolFlag, "boolFlag", false, "A boolean flag")
-	flag.StringVar(&redisIP, "redisIP", "Hello There!", "A string flag")
-	flag.StringVar(&redisPort, "redisPort", 1010, "A string flag")
-
-	flag.IntVar(&intFlag, "intFlag", 4, "An integer flag")
+	flag.StringVar(&xmlPath, "path", xmlPath, "Path to XML Documents folder")
+	flag.StringVar(&redisIP, "redisAddress", redisIP, "Redis IP flag")
+	flag.StringVar(&redisPort, "redisPort", "6379", "Redis Port Flag")
+	flag.StringVar(&redisPassword, "redisPassword", redisPassword, "Redis Password")
 
 	// Parse the flag
 	flag.Parse()
@@ -29,7 +38,12 @@ func main() {
 		os.Exit(0)
 	}
 
-	fmt.Println("Boolean Flag is ", boolFlag)
-	fmt.Println("String Flag is ", stringFlag)
-	fmt.Println("Int Flag is ", intFlag)
+	redis.Redis = redis.RedisNewClient(redisIP, redisPort, redisPassword)
+
+	tStart := time.Now()
+	xmlParser.ParseXML(xmlPath + "test.xml")
+	timeTrack(tStart, "Parser")
+
+	time.Sleep(10 * time.Second)
+
 }
